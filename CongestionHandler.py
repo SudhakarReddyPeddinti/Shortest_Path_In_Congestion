@@ -1,15 +1,19 @@
 # script for Floyd Warshall Algorithm- All Pair Shortest Path
 INF = 9999999
+n = 0
+distance = 0
+nextVertex = 0
+hopCount = 0
+path_array = 0
+load_matrix = 0
 
-distance = [[0 for row in range(6)] for col in range(6)]
-nextVertex = [[0 for row in range(6)] for col in range(6)]
-hopCount = [[0 for row in range(6)] for col in range(6)]
-path_array = [[0 for row in range(6)] for col in range(6)]
 
-load_matrix = [[0 for row in range(6)] for col in range(6)]
-
-#def calculate_load(flow_matrix):
-
+## Below methods will calculate the load on each edge
+def calculate_load(edge_matrix, flow_matrix):
+    for u in range(n):
+        for v in range(n):
+            print()
+    return
 
 
 
@@ -49,8 +53,8 @@ def get_path(origin, dest):
 
 def printShortestPath():
     print("Floyd Warshall Graph Paths")
-    for u, i in enumerate(range(0, 6), 1):
-        for v, j in enumerate(range(0, 6), 1):
+    for u, i in enumerate(range(0, n), 1):
+        for v, j in enumerate(range(0, n), 1):
             print(('(')+','.join(get_path(u,v))+')', end="      ")
         print("\n")
     print("\n")
@@ -58,22 +62,23 @@ def printShortestPath():
 
 def printHopCount():
     print("Hop count:")
-    for u in range(6):
-        for v in range(6):
+    for u in range(n):
+        for v in range(n):
             print(hopCount[u][v], end="  ")
         print(" ")
 
 
 def floydWarshall(EdgeGraph):
+    print(n)
     # Initialize the edge weights to distances.
-    for u in range(6):
-        for v in range(6):
+    for u in range(n):
+        for v in range(n):
             distance[u][v] = EdgeGraph[u][v]
             nextVertex[u][v] = v
 
-    for k in range(6):
-        for i in range(6):
-            for j in range(6):
+    for k in range(n):
+        for i in range(n):
+            for j in range(n):
                 if distance[i][k] + distance[k][j] < distance[i][j]:
                     distance[i][j] = distance[i][k] + distance[k][j]
                     nextVertex[i][j] = nextVertex[i][k]
@@ -82,6 +87,13 @@ def floydWarshall(EdgeGraph):
     printHopCount()
 
 if __name__ == '__main__':
+    n = int(input('Enter the value of n: '))
+    distance = [[0 for row in range(n)] for col in range(n)]
+    nextVertex = [[0 for row in range(n)] for col in range(n)]
+    hopCount = [[0 for row in range(n)] for col in range(n)]
+    path_array = [[0 for row in range(n)] for col in range(n)]
+    load_matrix = [[0 for row in range(n)] for col in range(n)]
+
     # Edge weight input filling Column -> Rows values
     edge_weights = [[0, 7, INF, 7, INF, 9],
                     [INF, 0, 5, INF, 10, 3],
@@ -98,7 +110,7 @@ if __name__ == '__main__':
                     [18, 16, 15, 8, 9, 0]]
 
     floydWarshall(edge_weights)
-    calculate_load(flow_matrix)
+    calculate_load(edge_weights, flow_matrix)
 
 
 
