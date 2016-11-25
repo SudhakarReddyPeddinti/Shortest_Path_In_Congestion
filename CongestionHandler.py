@@ -8,6 +8,20 @@ nextVertex = 0
 hopCount = 0
 path_array = 0
 load_matrix = 0
+actual_delay_matrix = 0
+
+def congestion_formula(i,j, c):
+    if(edge_weights[i][j]==INF):
+        actual_delay_matrix[i][j]=INF
+    else:
+        actual_delay_matrix[i][j] = round(((c+1)/(c+1 - load_matrix[i][j]))*edge_weights[i][j], 2)
+
+## actual_edge_delay()
+def actual_edge_delay(capacity):
+    for u in range(n):
+        for v in range(n):
+            congestion_formula(u,v,capacity[u][v])
+    print(actual_delay_matrix)
 
 ## Below methods will calculate the load on each edge
 def calculate_load(edge_matrix, flow_matrix):
@@ -19,8 +33,6 @@ def calculate_load(edge_matrix, flow_matrix):
                 route = path_array[u][v]
                 directions = zip(route[0::1], route[1::1])
                 for i in directions:
-                    print("origin", i[0], end=" ")
-                    print("dest", i[1])
                     load_matrix[i[0]-1][i[1]-1] += flow_matrix[u][v]
     print(load_matrix)
     return
@@ -102,6 +114,7 @@ if __name__ == '__main__':
     hopCount = [[0 for row in range(n)] for col in range(n)]
     path_array = [[0 for row in range(n)] for col in range(n)]
     load_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_delay_matrix = [[0 for row in range(n)] for col in range(n)]
 
     # Edge weight input filling Column -> Rows values
     edge_weights = [[0, 7, INF, 7, INF, 9],
@@ -118,14 +131,16 @@ if __name__ == '__main__':
                     [15, 9, 12, 14, 0, 16],
                     [18, 16, 15, 8, 9, 0]]
 
+    capacity_matrix =  [[0, 13, INF, 33, INF, 20],
+                        [INF, 0, 67, INF, 5, 55],
+                        [5, 5, 0, 32, 134, 17],
+                        [23, 34, 55, 0, INF, INF],
+                        [68, 47, 20, 14, 0, INF],
+                        [INF, 16, 44, 16, INF, 0]]
+
     floydWarshall(edge_weights)
-    # path = numpy.array(path_array)
-    # print(path)
-    #
-    # newMatrix = numpy.array((('0','1','2','3'), ('1','a','b','b'), ('2','b','c','d')), str)
-    # print("")
-    # print(newMatrix)
     calculate_load(edge_weights, flow_matrix)
+    actual_edge_delay(capacity_matrix)
 
 
 
