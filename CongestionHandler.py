@@ -1,3 +1,5 @@
+import numpy
+
 # script for Floyd Warshall Algorithm- All Pair Shortest Path
 INF = 9999999
 n = 0
@@ -7,14 +9,21 @@ hopCount = 0
 path_array = 0
 load_matrix = 0
 
-
 ## Below methods will calculate the load on each edge
 def calculate_load(edge_matrix, flow_matrix):
     for u in range(n):
         for v in range(n):
-            print()
+             if(edge_matrix[u][v] == INF):
+                 load_matrix[u][v] = INF
+             if(1==1):
+                route = path_array[u][v]
+                directions = zip(route[0::1], route[1::1])
+                for i in directions:
+                    print("origin", i[0], end=" ")
+                    print("dest", i[1])
+                    load_matrix[i[0]-1][i[1]-1] += flow_matrix[u][v]
+    print(load_matrix)
     return
-
 
 
 ## Below methods are helpful in calculating and populating the distance matrix, hop count matrix, shortest path matrix
@@ -110,6 +119,12 @@ if __name__ == '__main__':
                     [18, 16, 15, 8, 9, 0]]
 
     floydWarshall(edge_weights)
+    # path = numpy.array(path_array)
+    # print(path)
+    #
+    # newMatrix = numpy.array((('0','1','2','3'), ('1','a','b','b'), ('2','b','c','d')), str)
+    # print("")
+    # print(newMatrix)
     calculate_load(edge_weights, flow_matrix)
 
 
