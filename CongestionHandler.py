@@ -1,3 +1,5 @@
+from memory_profiler import profile
+from memory_profiler import memory_usage
 # script for Floyd Warshall Algorithm- All Pair Shortest Path to detect shortest path during congestion
 
 ## Global variables declaration
@@ -13,12 +15,12 @@ actual_edge_delay_matrix = 0
 actual_path_delay_matrix = 0
 
 ## Miscellaneous methods - handy to print
-def print_edge_values(edge_matrix, actual_path_matrix, path):
+def print_edge_values(edge_matrix, actual_edge_matrix, path):
     edges = zip(path[0::1],path[1::1])
     print(" Edge_path, Predicted_edge_length, Actual_edge_length")
     i = 0
     for street in edges:
-        print('{:>8} {:>15} {:>20}'.format(str(street), str(edge_matrix[street[0]-1][street[1]-1]), str("INF" if actual_path_matrix[a - 1][b - 1] == NoPath else actual_path_matrix[a - 1][b - 1])))
+        print('{:>8} {:>15} {:>20}'.format(str(street), str(edge_matrix[street[0]-1][street[1]-1]), str("INF" if actual_edge_matrix[street[0]-1][street[1]-1] == NoPath else actual_edge_matrix[street[0]-1][street[1]-1])))
         i=i+1
     print("Hop count is ",i)
 
@@ -52,7 +54,6 @@ def congestion_formula(i,j, c):
 
 
 ## Actual_edge_delay() based on the congestion using the congestion formula Congestion(G) = (Capacity(C)+1/Capacity(C)+1-Load(L))*EdgeWeight(E)
-# TODO: Make diagonals 0 instead of na (priority: small)
 def actual_edge_delay(capacity):
     for u in range(n):
         for v in range(n):
@@ -122,7 +123,8 @@ def printHopCount():
         print(" ")
     print("\n")
 
-
+fp=open('memory_profiler.log','w+')
+@profile(stream=fp)
 def floydWarshall(EdgeGraph):
     # Initialize the edge weights to distances.
     for u in range(n):
@@ -134,12 +136,14 @@ def floydWarshall(EdgeGraph):
         for i in range(n):
             for j in range(n):
                 if distance[i][k] + distance[k][j] < distance[i][j]:
-                    distance[i][j] = distance[i][k] + distance[k][j]
+                    distance[i][j] = round(distance[i][k] + distance[k][j],2)
                     nextVertex[i][j] = nextVertex[i][k]
 
 # Main method - Execution begins from here
+
 if __name__ == '__main__':
     file = open('input.txt')
+    iteration = 2
     raw_lines = file.read().splitlines()
     lines = list(line for line in raw_lines if line)
     first_line = lines[0].strip().split(',')
@@ -147,8 +151,10 @@ if __name__ == '__main__':
     edge_weights = [[0 if row==col else INF for row in range(n)] for col in range(n)]
     flow_matrix = [[0 if row==col else INF for row in range(n)] for col in range(n)]
     capacity_matrix = [[0 if row==col else INF for row in range(n)] for col in range(n)]
-    a = int(first_line[1])
-    b = int(first_line[2])
+    # a = int(first_line[1])
+    # b = int(first_line[2])
+    a=2
+    b=1
 
 # Initial empty matrices declaration based on the range value
     distance = [[0 for row in range(n)] for col in range(n)]
@@ -217,6 +223,7 @@ if __name__ == '__main__':
     actual_path_delay(path_array, actual_edge_delay_matrix, actual_path_delay_matrix)
     print("\nActual path delay matrix:")
     printShortestDistance(actual_path_delay_matrix)
+
     print("The shortest predicted path length between a:{} and b:{} is {}".format(a,b,distance[a-1][b-1]))
     print("The actual path length between a:{} and b:{} is {}".format(a,b,"INF" if actual_path_delay_matrix[a-1][b-1] == NoPath else actual_path_delay_matrix[a-1][b-1]))
     print("The actual path length and the predicted path length are within", round(((actual_path_delay_matrix[a - 1][
@@ -228,8 +235,7 @@ if __name__ == '__main__':
 
     print("\nThe shortest path between a:{} and b:{} is {}".format(a,b,path_array[a-1][b-1]))
     print("The predicted edge lengths from first and last edge on the path are:")
-    print_edge_values(edge_weights, actual_path_delay_matrix, path_array[a - 1][b - 1])
+    print_edge_values(edge_weights, actual_edge_delay_matrix, path_array[a - 1][b - 1])
 
-
-
+    # Recalculating the Shortest paths using G[i,j] as the weights
 
