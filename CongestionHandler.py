@@ -2,6 +2,7 @@
 
 ## Global variables declaration
 INF = 9999999
+NoPath = 999999
 n = 0
 distance = 0
 nextVertex = 0
@@ -17,7 +18,7 @@ def print_edge_values(edge_matrix, actual_path_matrix, path):
     print(" Edge_path, Predicted_edge_length, Actual_edge_length")
     i = 0
     for street in edges:
-        print('{:>8} {:>15} {:>20}'.format(str(street), str(edge_matrix[street[0]-1][street[1]-1]), str(actual_path_matrix[street[0]-1][street[1]-1])))
+        print('{:>8} {:>15} {:>20}'.format(str(street), str(edge_matrix[street[0]-1][street[1]-1]), str("INF" if actual_path_matrix[a - 1][b - 1] == NoPath else actual_path_matrix[a - 1][b - 1])))
         i=i+1
     print("Hop count is ",i)
 
@@ -28,18 +29,30 @@ def actual_path_delay(shortest_path, actual_edge_delay, output):
             route = shortest_path[u][v]
             street_map = zip(route[0::1], route[1::1])
             for i in street_map:
-                output[u][v] += actual_edge_delay[i[0]-1][i[1]-1]
-
+                if (actual_edge_delay[i[0] - 1][i[1] - 1] == NoPath):
+                    output[u][v] = NoPath
+                    break
+                else:
+                    output[u][v] += actual_edge_delay[i[0]-1][i[1]-1]
+                    output[u][v] = round(output[u][v],2)
 
 ## Formula for congestion calculation -> G[i,j] = (C[i][j]+1/(C[i][j]+1-L[i][j])*E[i][j])
 def congestion_formula(i,j, c):
-    if(edge_weights[i][j]==INF):
+    if(i==j):
+        actual_edge_delay_matrix[i][j]=0
+    elif(edge_weights[i][j]==INF):
         actual_edge_delay_matrix[i][j]=INF
     else:
-        actual_edge_delay_matrix[i][j] = round(((c+1)/(c+1 - load_matrix[i][j]))*edge_weights[i][j], 2)
+        congestion = ((c+1)/(c+1 - load_matrix[i][j]))*edge_weights[i][j]
+        if (congestion>0):
+            actual_edge_delay_matrix[i][j] = round(congestion, 2)
+        else:
+            actual_edge_delay_matrix[i][j] = NoPath
+
 
 
 ## Actual_edge_delay() based on the congestion using the congestion formula Congestion(G) = (Capacity(C)+1/Capacity(C)+1-Load(L))*EdgeWeight(E)
+# TODO: Make diagonals 0 instead of na (priority: small)
 def actual_edge_delay(capacity):
     for u in range(n):
         for v in range(n):
@@ -67,7 +80,7 @@ def calculate_load(edge_matrix, flow_matrix, output_matrix):
 # printHopCount() - prints hop count in pretty format
 
 def printShortestDistance(distGraph):
-    print('\n'.join([''.join(['{:8}'.format('{:>8}'.format("na") if item==INF else item) for item in row])
+    print('\n'.join([''.join(['{:8}'.format('{:>8}'.format("na") if item==INF else '{:>8}'.format("INF") if item==NoPath else item) for item in row])
                      for row in distGraph]))
     print("\n")
     print("\n")
@@ -168,6 +181,27 @@ if __name__ == '__main__':
             value = int(items[3].strip())
             capacity_matrix[u-1][v-1] = value
 
+    # Edge weight input filling Column -> Rows values
+    # edge_weights = [[0, 7, INF, 7, INF, 9],
+    #                 [INF, 0, 5, INF, 10, 3],
+    #                 [9, 10, 0, 8, 4, 6],
+    #                 [9, 4, 2, 0, INF, INF],
+    #                 [3, 5, 10, 10, 0, INF],
+    #                 [INF, 5, 8, 10, INF, 0]]
+    #
+    # flow_matrix =  [[0, 9, 11, 12, 8, 12],
+    #                 [18, 0, 15, 10, 17, 18],
+    #                 [17, 18, 0, 14, 10, 10],
+    #                 [17, 8, 10, 0, 17, 18],
+    #                 [15, 9, 12, 14, 0, 16],
+    #                 [18, 16, 15, 8, 9, 0]]
+    #
+    # capacity_matrix =  [[0, 13, INF, 33, INF, 20],
+    #                     [INF, 0, 67, INF, 5, 55],
+    #                     [5, 5, 0, 32, 134, 17],
+    #                     [23, 34, 55, 0, INF, INF],
+    #                     [68, 47, 20, 14, 0, INF],
+    #                     [INF, 16, 44, 16, INF, 0]]
 
     floydWarshall(edge_weights)
     print("\nFloyd Warshall shortest path distances:")
@@ -184,7 +218,7 @@ if __name__ == '__main__':
     print("\nActual path delay matrix:")
     printShortestDistance(actual_path_delay_matrix)
     print("The shortest predicted path length between a:{} and b:{} is {}".format(a,b,distance[a-1][b-1]))
-    print("The actual path length between a:{} and b:{} is {}".format(a,b,actual_path_delay_matrix[a-1][b-1]))
+    print("The actual path length between a:{} and b:{} is {}".format(a,b,"INF" if actual_path_delay_matrix[a-1][b-1] == NoPath else actual_path_delay_matrix[a-1][b-1]))
     print("The actual path length and the predicted path length are within", round(((actual_path_delay_matrix[a - 1][
                                                                                             b - 1] - distance[a - 1][
                                                                                             b - 1]) /
