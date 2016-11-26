@@ -8,35 +8,52 @@ nextVertex = 0
 hopCount = 0
 path_array = 0
 load_matrix = 0
-actual_delay_matrix = 0
+actual_edge_delay_matrix = 0
+actual_path_delay_matrix = 0
 
+
+## actual congestion calculation for the shortest path based on the actual edge delays
+def actual_path_delay(shortest_path, actual_edge_delay, output):
+    for u in range(n):
+        for v in range(n):
+            route = shortest_path[u][v]
+            street_map = zip(route[0::1], route[1::1])
+            for i in street_map:
+                output[u][v] += actual_edge_delay[i[0]-1][i[1]-1]
+
+
+## formula for congestion calculation
 def congestion_formula(i,j, c):
     if(edge_weights[i][j]==INF):
-        actual_delay_matrix[i][j]=INF
+        actual_edge_delay_matrix[i][j]=INF
     else:
-        actual_delay_matrix[i][j] = round(((c+1)/(c+1 - load_matrix[i][j]))*edge_weights[i][j], 2)
+        actual_edge_delay_matrix[i][j] = round(((c+1)/(c+1 - load_matrix[i][j]))*edge_weights[i][j], 2)
+
 
 ## actual_edge_delay()
 def actual_edge_delay(capacity):
     for u in range(n):
         for v in range(n):
             congestion_formula(u,v,capacity[u][v])
-    print(actual_delay_matrix)
+
 
 ## Below methods will calculate the load on each edge
-def calculate_load(edge_matrix, flow_matrix):
+def calculate_load(edge_matrix, flow_matrix, output_matrix):
     for u in range(n):
         for v in range(n):
              if(edge_matrix[u][v] == INF):
-                 load_matrix[u][v] = INF
+                 output_matrix[u][v] = INF
              if(1==1):
                 route = path_array[u][v]
                 directions = zip(route[0::1], route[1::1])
                 for i in directions:
-                    load_matrix[i[0]-1][i[1]-1] += flow_matrix[u][v]
-    print(load_matrix)
-    return
+                    output_matrix[i[0]-1][i[1]-1] += flow_matrix[u][v]
 
+
+## actual path delay/cost calculation based on the shortest path with actual delay matrix
+# def actual_path_delay():
+#     calculate_load(actual_edge_delay_matrix, flow_matrix)
+# print(actual_path_delay_matrix)
 
 ## Below methods are helpful in calculating and populating the distance matrix, hop count matrix, shortest path matrix
 # floydWarshall() -> calculates shortest distances and updates distance matrix
@@ -46,8 +63,7 @@ def calculate_load(edge_matrix, flow_matrix):
 # printHopCount() - prints hop count in pretty format
 
 def printShortestDistance(distGraph):
-    print("Floyd Warshall Graph Distances:")
-    print('\n'.join([''.join(['{:5}'.format(item) for item in row])
+    print('\n'.join([''.join(['{:8}'.format('{:>8}'.format("na") if item==INF else item) for item in row])
                      for row in distGraph]))
     print("\n")
     print("\n")
@@ -87,10 +103,10 @@ def printHopCount():
         for v in range(n):
             print(hopCount[u][v], end="  ")
         print(" ")
+    print("\n")
 
 
 def floydWarshall(EdgeGraph):
-    print(n)
     # Initialize the edge weights to distances.
     for u in range(n):
         for v in range(n):
@@ -103,18 +119,51 @@ def floydWarshall(EdgeGraph):
                 if distance[i][k] + distance[k][j] < distance[i][j]:
                     distance[i][j] = distance[i][k] + distance[k][j]
                     nextVertex[i][j] = nextVertex[i][k]
-    printShortestDistance(distance)
-    printShortestPath()
-    printHopCount()
+
 
 if __name__ == '__main__':
-    n = int(input('Enter the value of n: '))
+
+    n = 6
+    # file = open('input.txt')
+    # raw_lines = file.read().splitlines()
+    # lines = list(line for line in raw_lines if line)
+    # first_line = lines[0].strip().split(',')
+    # n = int(first_line[0])
+    edge_weights = [[0 if row==col else INF for row in range(n)] for col in range(n)]
+    flow_matrix = [[0 if row==col else INF for row in range(n)] for col in range(n)]
+    capacity_matrix = [[0 if row==col else INF for row in range(n)] for col in range(n)]
+    # a = int(first_line[1])
+    # b = int(first_line[2])
+
+# Initial empty matrices declaration
     distance = [[0 for row in range(n)] for col in range(n)]
     nextVertex = [[0 for row in range(n)] for col in range(n)]
     hopCount = [[0 for row in range(n)] for col in range(n)]
     path_array = [[0 for row in range(n)] for col in range(n)]
     load_matrix = [[0 for row in range(n)] for col in range(n)]
-    actual_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_edge_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_path_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+
+    # for raw_line in lines:
+    #     line = raw_line.strip()
+    #     if(line.startswith('E')):
+    #         items = line.strip('E').split(',')
+    #         u = int(items[1].strip())
+    #         v = int(items[2].strip())
+    #         value = int(items[3].strip())
+    #         edge_weights[u-1][v-1] = value
+    #     elif(line.startswith('F')):
+    #         items = line.strip('F').split(',')
+    #         u = int(items[1].strip())
+    #         v = int(items[2].strip())
+    #         value = int(items[3].strip())
+    #         flow_matrix[u-1][v-1] = value
+    #     elif (line.startswith('C')):
+    #         items = line.strip('C').split(',')
+    #         u = int(items[1].strip())
+    #         v = int(items[2].strip())
+    #         value = int(items[3].strip())
+    #         capacity_matrix[u-1][v-1] = value
 
     # Edge weight input filling Column -> Rows values
     edge_weights = [[0, 7, INF, 7, INF, 9],
@@ -139,8 +188,19 @@ if __name__ == '__main__':
                         [INF, 16, 44, 16, INF, 0]]
 
     floydWarshall(edge_weights)
-    calculate_load(edge_weights, flow_matrix)
+    print("\nFloyd Warshall shortest path distances:")
+    printShortestDistance(distance)
+    printShortestPath()
+    printHopCount()
+    calculate_load(edge_weights, flow_matrix, load_matrix)
+    print("\nLoad_matrix:")
+    printShortestDistance(load_matrix)
     actual_edge_delay(capacity_matrix)
+    print("\nActual edge delay matrix:")
+    printShortestDistance(actual_edge_delay_matrix)
+    actual_path_delay(path_array, actual_edge_delay_matrix, actual_path_delay_matrix)
+    print("\nActual path delay matrix:")
+    printShortestDistance(actual_path_delay_matrix)
 
 
 
