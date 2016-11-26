@@ -3,8 +3,8 @@ from memory_profiler import memory_usage
 # script for Floyd Warshall Algorithm- All Pair Shortest Path to detect shortest path during congestion
 
 ## Global variables declaration
-INF = 9999999
-NoPath = 999999
+INF = 99999999999
+NoPath = 999999999
 n = 0
 distance = 0
 nextVertex = 0
@@ -15,6 +15,8 @@ actual_edge_delay_matrix = 0
 actual_path_delay_matrix = 0
 
 ## Miscellaneous methods - handy to print
+# fp=open('memory_profiler.log','w+')
+# @profile(stream=fp)
 def print_edge_values(edge_matrix, actual_edge_matrix, path):
     edges = zip(path[0::1],path[1::1])
     print(" Edge_path, Predicted_edge_length, Actual_edge_length")
@@ -24,7 +26,18 @@ def print_edge_values(edge_matrix, actual_edge_matrix, path):
         i=i+1
     print("Hop count is ",i)
 
+## Below methods are for calculating the residual values
+def calculate_load_residues(load, capacity, input_matrix):
+    for u in range(n):
+        for v in range(n):
+            if(load[u][v]>capacity[u][v]):
+                input_matrix[u][v] = INF
+                load[u][v] = load[u][v] - capacity[u][v]
+                capacity[u][v] = INF
+
+
 ## Actual congestion calculation for the shortest path based on the actual edge delays
+# @profile(stream=fp)
 def actual_path_delay(shortest_path, actual_edge_delay, output):
     for u in range(n):
         for v in range(n):
@@ -39,6 +52,7 @@ def actual_path_delay(shortest_path, actual_edge_delay, output):
                     output[u][v] = round(output[u][v],2)
 
 ## Formula for congestion calculation -> G[i,j] = (C[i][j]+1/(C[i][j]+1-L[i][j])*E[i][j])
+# @profile(stream=fp)
 def congestion_formula(i,j, c):
     if(i==j):
         actual_edge_delay_matrix[i][j]=0
@@ -54,6 +68,7 @@ def congestion_formula(i,j, c):
 
 
 ## Actual_edge_delay() based on the congestion using the congestion formula Congestion(G) = (Capacity(C)+1/Capacity(C)+1-Load(L))*EdgeWeight(E)
+# @profile(stream=fp)
 def actual_edge_delay(capacity):
     for u in range(n):
         for v in range(n):
@@ -61,6 +76,7 @@ def actual_edge_delay(capacity):
 
 
 ## Below methods will calculate the load on each edge
+# @profile(stream=fp)
 def calculate_load(edge_matrix, flow_matrix, output_matrix):
     for u in range(n):
         for v in range(n):
@@ -80,13 +96,15 @@ def calculate_load(edge_matrix, flow_matrix, output_matrix):
 # get_path() -> calculates and updates the path_array matrix and hop count matrix
 # printHopCount() - prints hop count in pretty format
 
+# @profile(stream=fp)
 def printShortestDistance(distGraph):
-    print('\n'.join([''.join(['{:8}'.format('{:>8}'.format("na") if item==INF else '{:>8}'.format("INF") if item==NoPath else item) for item in row])
+    print('\n'.join([''.join(['{:13}'.format('{:>13}'.format("na") if item==INF else '{:>13}'.format("INF") if item==NoPath else item) for item in row])
                      for row in distGraph]))
     print("\n")
     print("\n")
 
 
+# @profile(stream=fp)
 def get_path(origin, dest):
   """
   Reconstruct shortest path from each of u to v using the predecessor matrix passed as input
@@ -106,6 +124,7 @@ def get_path(origin, dest):
     origin = predecessor
 
 
+# @profile(stream=fp)
 def printShortestPath():
     print("Floyd Warshall Graph Paths")
     for u, i in enumerate(range(0, n), 1):
@@ -115,6 +134,7 @@ def printShortestPath():
     print("\n")
 
 
+# @profile(stream=fp)
 def printHopCount():
     print("Hop count:")
     for u in range(n):
@@ -123,8 +143,8 @@ def printHopCount():
         print(" ")
     print("\n")
 
-fp=open('memory_profiler.log','w+')
-@profile(stream=fp)
+
+# @profile(stream=fp)
 def floydWarshall(EdgeGraph):
     # Initialize the edge weights to distances.
     for u in range(n):
@@ -137,10 +157,46 @@ def floydWarshall(EdgeGraph):
             for j in range(n):
                 if distance[i][k] + distance[k][j] < distance[i][j]:
                     distance[i][j] = round(distance[i][k] + distance[k][j],2)
+                    distance[i][j] = round(distance[i][j])
                     nextVertex[i][j] = nextVertex[i][k]
 
-# Main method - Execution begins from here
+def output_loop(iteration_value):
+    while(iteration_value>0):
+        iteration_value = iteration_value - 1
 
+        floydWarshall(edge_weights)
+        print("\nFloyd Warshall shortest path distances:")
+        printShortestDistance(distance)
+        printShortestPath()
+        printHopCount()
+        calculate_load(edge_weights, flow_matrix, load_matrix)
+        print("\nLoad_matrix:")
+        printShortestDistance(load_matrix)
+        actual_edge_delay(capacity_matrix)
+        print("\nActual edge delay matrix:")
+        printShortestDistance(actual_edge_delay_matrix)
+        actual_path_delay(path_array, actual_edge_delay_matrix, actual_path_delay_matrix)
+        print("\nActual path delay matrix:")
+        printShortestDistance(actual_path_delay_matrix)
+
+        print("The shortest predicted path length between a:{} and b:{} is {}".format(a, b, distance[a - 1][
+                        b - 1]))
+        print("The actual path length between a:{} and b:{} is {}".format(a, b, "INF" if
+                    actual_path_delay_matrix[a - 1][b - 1] == NoPath else actual_path_delay_matrix[a - 1][b - 1]))
+        print("The actual path length and the predicted path length are within",
+                          round(((actual_path_delay_matrix[a - 1][
+                                      b - 1] - distance[a - 1][
+                                      b - 1]) /
+                                 actual_path_delay_matrix[a - 1][
+                                     b - 1] * 100), 2),
+                          "of each other")
+
+        print("\nThe shortest path between a:{} and b:{} is {}".format(a, b, path_array[a - 1][b - 1]))
+        print("The predicted edge lengths from first and last edge on the path are:")
+        print_edge_values(edge_weights, actual_edge_delay_matrix, path_array[a - 1][b - 1])
+
+
+# Main method - Execution begins from here
 if __name__ == '__main__':
     file = open('input.txt')
     iteration = 2
@@ -187,27 +243,57 @@ if __name__ == '__main__':
             value = int(items[3].strip())
             capacity_matrix[u-1][v-1] = value
 
-    # Edge weight input filling Column -> Rows values
-    # edge_weights = [[0, 7, INF, 7, INF, 9],
-    #                 [INF, 0, 5, INF, 10, 3],
-    #                 [9, 10, 0, 8, 4, 6],
-    #                 [9, 4, 2, 0, INF, INF],
-    #                 [3, 5, 10, 10, 0, INF],
-    #                 [INF, 5, 8, 10, INF, 0]]
-    #
-    # flow_matrix =  [[0, 9, 11, 12, 8, 12],
-    #                 [18, 0, 15, 10, 17, 18],
-    #                 [17, 18, 0, 14, 10, 10],
-    #                 [17, 8, 10, 0, 17, 18],
-    #                 [15, 9, 12, 14, 0, 16],
-    #                 [18, 16, 15, 8, 9, 0]]
-    #
-    # capacity_matrix =  [[0, 13, INF, 33, INF, 20],
-    #                     [INF, 0, 67, INF, 5, 55],
-    #                     [5, 5, 0, 32, 134, 17],
-    #                     [23, 34, 55, 0, INF, INF],
-    #                     [68, 47, 20, 14, 0, INF],
-    #                     [INF, 16, 44, 16, INF, 0]]
+    #Main Loop
+    floydWarshall(edge_weights)
+    print("\nFloyd Warshall shortest path distances:")
+    printShortestDistance(distance)
+    printShortestPath()
+    printHopCount()
+    calculate_load(edge_weights, flow_matrix, load_matrix)
+    print("\nLoad_matrix:")
+    printShortestDistance(load_matrix)
+    actual_edge_delay(capacity_matrix)
+    print("\nActual edge delay matrix:")
+    printShortestDistance(actual_edge_delay_matrix)
+    actual_path_delay(path_array, actual_edge_delay_matrix, actual_path_delay_matrix)
+    print("\nActual path delay matrix:")
+    printShortestDistance(actual_path_delay_matrix)
+
+    print("The shortest predicted path length between a:{} and b:{} is {}".format(a, b, distance[a - 1][
+        b - 1]))
+    print("The actual path length between a:{} and b:{} is {}".format(a, b, "INF" if
+    actual_path_delay_matrix[a - 1][b - 1] == NoPath else actual_path_delay_matrix[a - 1][b - 1]))
+    print("The actual path length and the predicted path length are within",
+          round(((actual_path_delay_matrix[a - 1][
+                      b - 1] - distance[a - 1][
+                      b - 1]) /
+                 actual_path_delay_matrix[a - 1][
+                     b - 1] * 100), 2),
+          "of each other")
+
+    print("\nThe shortest path between a:{} and b:{} is {}".format(a, b, path_array[a - 1][b - 1]))
+    print("The predicted edge lengths from first and last edge on the path are:")
+    print_edge_values(edge_weights, actual_edge_delay_matrix, path_array[a - 1][b - 1])
+
+
+    #Iteration:1
+    actual_edge_delay_matrix = [[INF if item > 99999999 else item for item in row] for row in actual_edge_delay_matrix]
+    edge_weights = actual_edge_delay_matrix
+    distance = [[0 for row in range(n)] for col in range(n)]
+    nextVertex = [[0 for row in range(n)] for col in range(n)]
+    hopCount = [[0 for row in range(n)] for col in range(n)]
+    path_array = [[0 for row in range(n)] for col in range(n)]
+    load_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_edge_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_path_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+
+    print("Edge_Matrix:", edge_weights)
+    print("distance_Matrix: ", distance)
+    print("next_Vertex_Matrix:", nextVertex)
+    print("hopCount_Matrix:", hopCount)
+    print("path_array:", path_array)
+    print("actual_edge_delay_matrix: ", actual_edge_delay_matrix)
+    print("actual_edge_path_matrix: ", actual_path_delay_matrix)
 
     floydWarshall(edge_weights)
     print("\nFloyd Warshall shortest path distances:")
@@ -224,18 +310,121 @@ if __name__ == '__main__':
     print("\nActual path delay matrix:")
     printShortestDistance(actual_path_delay_matrix)
 
-    print("The shortest predicted path length between a:{} and b:{} is {}".format(a,b,distance[a-1][b-1]))
-    print("The actual path length between a:{} and b:{} is {}".format(a,b,"INF" if actual_path_delay_matrix[a-1][b-1] == NoPath else actual_path_delay_matrix[a-1][b-1]))
-    print("The actual path length and the predicted path length are within", round(((actual_path_delay_matrix[a - 1][
-                                                                                            b - 1] - distance[a - 1][
-                                                                                            b - 1]) /
-                                                                                       actual_path_delay_matrix[a - 1][
-                                                                                           b - 1] * 100), 2),
+    print("The shortest predicted path length between a:{} and b:{} is {}".format(a, b, distance[a - 1][
+        b - 1]))
+    print("The actual path length between a:{} and b:{} is {}".format(a, b, "INF" if
+    actual_path_delay_matrix[a - 1][b - 1] == NoPath else actual_path_delay_matrix[a - 1][b - 1]))
+    print("The actual path length and the predicted path length are within",
+          round(((actual_path_delay_matrix[a - 1][
+                      b - 1] - distance[a - 1][
+                      b - 1]) /
+                 actual_path_delay_matrix[a - 1][
+                     b - 1] * 100), 2),
           "of each other")
 
-    print("\nThe shortest path between a:{} and b:{} is {}".format(a,b,path_array[a-1][b-1]))
+    print("\nThe shortest path between a:{} and b:{} is {}".format(a, b, path_array[a - 1][b - 1]))
+    print("The predicted edge lengths from first and last edge on the path are:")
+    print_edge_values(edge_weights, actual_edge_delay_matrix, path_array[a - 1][b - 1])
+
+    # Iteration:2
+    actual_edge_delay_matrix = [[INF if item > 99999999 else item for item in row] for row in actual_edge_delay_matrix]
+    edge_weights = actual_edge_delay_matrix
+    distance = [[0 for row in range(n)] for col in range(n)]
+    nextVertex = [[0 for row in range(n)] for col in range(n)]
+    hopCount = [[0 for row in range(n)] for col in range(n)]
+    path_array = [[0 for row in range(n)] for col in range(n)]
+    load_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_edge_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_path_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+
+    print("Edge_Matrix:", edge_weights)
+    print("distance_Matrix: ", distance)
+    print("next_Vertex_Matrix:", nextVertex)
+    print("hopCount_Matrix:", hopCount)
+    print("path_array:", path_array)
+    print("actual_edge_delay_matrix: ", actual_edge_delay_matrix)
+    print("actual_edge_path_matrix: ", actual_path_delay_matrix)
+
+    floydWarshall(edge_weights)
+    print("\nFloyd Warshall shortest path distances:")
+    printShortestDistance(distance)
+    printShortestPath()
+    printHopCount()
+    calculate_load(edge_weights, flow_matrix, load_matrix)
+    print("\nLoad_matrix:")
+    printShortestDistance(load_matrix)
+    actual_edge_delay(capacity_matrix)
+    print("\nActual edge delay matrix:")
+    printShortestDistance(actual_edge_delay_matrix)
+    actual_path_delay(path_array, actual_edge_delay_matrix, actual_path_delay_matrix)
+    print("\nActual path delay matrix:")
+    printShortestDistance(actual_path_delay_matrix)
+
+    print("The shortest predicted path length between a:{} and b:{} is {}".format(a, b, distance[a - 1][
+        b - 1]))
+    print("The actual path length between a:{} and b:{} is {}".format(a, b, "INF" if
+    actual_path_delay_matrix[a - 1][b - 1] == NoPath else actual_path_delay_matrix[a - 1][b - 1]))
+    print("The actual path length and the predicted path length are within",
+          round(((actual_path_delay_matrix[a - 1][
+                      b - 1] - distance[a - 1][
+                      b - 1]) /
+                 actual_path_delay_matrix[a - 1][
+                     b - 1] * 100), 2),
+          "of each other")
+
+    print("\nThe shortest path between a:{} and b:{} is {}".format(a, b, path_array[a - 1][b - 1]))
+    print("The predicted edge lengths from first and last edge on the path are:")
+    print_edge_values(edge_weights, actual_edge_delay_matrix, path_array[a - 1][b - 1])
+
+    # Iteration:3
+    actual_edge_delay_matrix = [[INF if item > 99999999 else item for item in row] for row in actual_edge_delay_matrix]
+    edge_weights = actual_edge_delay_matrix
+    distance = [[0 for row in range(n)] for col in range(n)]
+    nextVertex = [[0 for row in range(n)] for col in range(n)]
+    hopCount = [[0 for row in range(n)] for col in range(n)]
+    path_array = [[0 for row in range(n)] for col in range(n)]
+    load_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_edge_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+    actual_path_delay_matrix = [[0 for row in range(n)] for col in range(n)]
+
+    print("Edge_Matrix:", edge_weights)
+    print("distance_Matrix: ", distance)
+    print("next_Vertex_Matrix:", nextVertex)
+    print("hopCount_Matrix:", hopCount)
+    print("path_array:", path_array)
+    print("actual_edge_delay_matrix: ", actual_edge_delay_matrix)
+    print("actual_edge_path_matrix: ", actual_path_delay_matrix)
+
+    floydWarshall(edge_weights)
+    print("\nFloyd Warshall shortest path distances:")
+    printShortestDistance(distance)
+    printShortestPath()
+    printHopCount()
+    calculate_load(edge_weights, flow_matrix, load_matrix)
+    print("\nLoad_matrix:")
+    printShortestDistance(load_matrix)
+    actual_edge_delay(capacity_matrix)
+    print("\nActual edge delay matrix:")
+    printShortestDistance(actual_edge_delay_matrix)
+    actual_path_delay(path_array, actual_edge_delay_matrix, actual_path_delay_matrix)
+    print("\nActual path delay matrix:")
+    printShortestDistance(actual_path_delay_matrix)
+
+    print("The shortest predicted path length between a:{} and b:{} is {}".format(a, b, distance[a - 1][
+        b - 1]))
+    print("The actual path length between a:{} and b:{} is {}".format(a, b, "INF" if
+    actual_path_delay_matrix[a - 1][b - 1] == NoPath else actual_path_delay_matrix[a - 1][b - 1]))
+    print("The actual path length and the predicted path length are within",
+          round(((actual_path_delay_matrix[a - 1][
+                      b - 1] - distance[a - 1][
+                      b - 1]) /
+                 actual_path_delay_matrix[a - 1][
+                     b - 1] * 100), 2),
+          "of each other")
+
+    print("\nThe shortest path between a:{} and b:{} is {}".format(a, b, path_array[a - 1][b - 1]))
     print("The predicted edge lengths from first and last edge on the path are:")
     print_edge_values(edge_weights, actual_edge_delay_matrix, path_array[a - 1][b - 1])
 
     # Recalculating the Shortest paths using G[i,j] as the weights
-
+    #calculate_load_residues(load_matrix, capacity_matrix, edge_weights)
