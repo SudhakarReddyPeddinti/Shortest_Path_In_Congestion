@@ -5,6 +5,8 @@ from memory_profiler import memory_usage
 ## Global variables declaration
 INF = 99999999999
 NoPath = 999999999
+a = 0
+b = 0
 n = 0
 distance = 0
 nextVertex = 0
@@ -33,30 +35,33 @@ def calculate_load_residues(load, capacity, input_matrix):
     target = 0
     updated = 0
 
-    # route = path_array[a - 1][b - 1]
-    # print(route)
-    # edges_list = zip(route[0::1], route[1::1])
-    #
-    # for i in edges_list:
-    #     print(i)
-    #     if(load[i[0]][i[1]]>capacity[i[0]][i[1]] and load[i[0]][i[1]]>temp):
-    #         temp = load[i[0]][i[1]]
-    #         updated = 1
-    #         source = i[0]
-    #         target = i[1]
+    route = path_array[a - 1][b - 1]
+    print(route)
+    edges_list = zip(route[0::1], route[1::1])
+
+    for i in edges_list:
+        print(i)
+        if(load[i[0]-1][i[1]-1]>capacity[i[0]-1][i[1]-1] and load[i[0]-1][i[1]-1]>temp):
+            temp = load[i[0]-1][i[1]-1]
+            updated = 1
+            source = i[0]-1
+            target = i[1]-1
 
 
-    for u in range(n):
-        for v in range(n):
-            if(load[u][v]>capacity[u][v] and load[u][v]>temp):
-                 temp = load[u][v]
-                 updated = 1
-                 source = u
-                 target = v
+    # for u in range(n):
+    #     for v in range(n):
+    #         if(load[u][v]>capacity[u][v] and load[u][v]>temp):
+    #              temp = load[u][v]
+    #              updated = 1
+    #              source = u
+    #              target = v
     #print("The updated value is ")
     #print(updated)
 
     if(updated == 1):
+        print("updated", updated)
+        print("Source", source)
+        print("target", target)
         input_matrix[source][target] = INF
         #print("The updated path array ", +path_array[a - 1][b - 1])
         load[source][target] = load[source][target] - capacity[source][target]
@@ -236,10 +241,10 @@ if __name__ == '__main__':
     edge_weights = [[0 if row==col else INF for row in range(n)] for col in range(n)]
     flow_matrix = [[0 if row==col else INF for row in range(n)] for col in range(n)]
     capacity_matrix = [[0 if row==col else INF for row in range(n)] for col in range(n)]
-    #a = int(first_line[1])
-    #b = int(first_line[2])
-    a=5
-    b=2
+    a = int(first_line[1])
+    b = int(first_line[2])
+    # a=3
+    # b=2
 
 # Initial empty matrices declaration based on the range value
     distance = [[0 for row in range(n)] for col in range(n)]
@@ -308,20 +313,16 @@ if __name__ == '__main__':
     distance = [[0 for row in range(n)] for col in range(n)]
     nextVertex = [[0 for row in range(n)] for col in range(n)]
     hopCount = [[0 for row in range(n)] for col in range(n)]
-    path_array = [[0 for row in range(n)] for col in range(n)]
+    #path_array = [[0 for row in range(n)] for col in range(n)]
     actual_edge_delay_matrix = [[0 for row in range(n)] for col in range(n)]
     actual_path_delay_matrix = [[0 for row in range(n)] for col in range(n)]
 
     calculate_load_residues(load_matrix, capacity_matrix, edge_weights)
+    path_array = [[0 for row in range(n)] for col in range(n)]
 
     print("Edge_Matrix:", edge_weights)
     print("distance_Matrix: ", distance)
-    print("next_Vertex_Matrix:", nextVertex)
-    print("hopCount_Matrix:", hopCount)
     print("path_array:", path_array)
-    print("actual_edge_delay_matrix: ", actual_edge_delay_matrix)
-    print("actual_edge_path_matrix: ", actual_path_delay_matrix)
-
     print("Capacity", capacity_matrix)
     print("Load", load_matrix)
 
@@ -330,7 +331,8 @@ if __name__ == '__main__':
     printShortestDistance(distance)
     printShortestPath()
     printHopCount()
-    calculate_load(edge_weights, flow_matrix, load_matrix)
+    # calculate_load(edge_weights, flow_matrix, load_matrix)
+
     print("\nLoad_matrix:")
     printShortestDistance(load_matrix)
     actual_edge_delay(capacity_matrix)
@@ -355,5 +357,3 @@ if __name__ == '__main__':
     print("\nThe shortest path between a:{} and b:{} is {}".format(a, b, path_array[a - 1][b - 1]))
     print("The predicted edge lengths from first and last edge on the path are:")
     print_edge_values(edge_weights, actual_edge_delay_matrix, path_array[a - 1][b - 1])
-
-    # Recalculating the Shortest paths using G[i,j] as the weights
